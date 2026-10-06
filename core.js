@@ -55,7 +55,7 @@
       if(m.dynamic)voices(s).forEach(v=>dynamics[v.id]=m.dynamic);
       const holds=new Map();src.filter(n=>n.articulation==='fermata').forEach(n=>{const at=n.beat+ticks(n.e);holds.set(at,Math.max(holds.get(at)||0,ticks(n.e)*.5));});
       const mapBeat=b=>b+[...holds].reduce((a,[at,extra])=>a+(at<=b+EPS?extra:0),0);
-      src.forEach(n=>{if(n.e.dynamic)dynamics[n.voice]=n.e.dynamic;const start=cursor+mapBeat(n.beat)/48*60/bpm,end=cursor+mapBeat(n.beat+ticks(n.e))/48*60/bpm;out.push({...n,occurrence,pass:visit.pass,start,seconds:end-start,volume:volume[dynamics[n.voice]||'mf']});});cursor+=mapBeat(length)/48*60/bpm;
+      src.forEach(n=>{if(n.e.dynamic&&!['sf','sfz','rfz','fp'].includes(n.e.dynamic))dynamics[n.voice]=n.e.dynamic;const start=cursor+mapBeat(n.beat)/48*60/bpm,end=cursor+mapBeat(n.beat+ticks(n.e))/48*60/bpm;out.push({...n,occurrence,pass:visit.pass,start,seconds:end-start,volume:volume[n.e.dynamic||dynamics[n.voice]||'mf'],baseVolume:volume[dynamics[n.voice]||'mf']});});cursor+=mapBeat(length)/48*60/bpm;
     });
     voices(s).forEach(v=>{const part=out.filter(n=>n.voice===v.id);part.forEach((n,i)=>{const next=part[i+1];n.validTie=!!n.e.tie&&n.midi!==null&&next?.midi===n.midi&&next.sequence===n.sequence+1&&close(n.start+n.seconds,next.start);if(n.validTie&&n.tones.map(t=>t.midi).sort().join(',')!==next.tones.map(t=>t.midi).sort().join(','))n.validTie=false;n.next=next||null;n.continuation=i>0&&part[i-1].validTie;});});
     applyDynamicRamps(s,source,out,volume);applyPedalSustain(s,source,out);
@@ -75,7 +75,7 @@
       ramps.sort((a,b)=>b.priority-a.priority||b.start-a.start);let previous=null,carry=null;const parameters=new Map();
       out.filter(n=>n.voice===v.id).forEach(n=>{
         if(previous&&n.sequence<=previous.sequence){parameters.clear();carry=null;}
-        const explicit=n.e.dynamic||(s.measures[n.mi].dynamic&&(!previous||previous.mi!==n.mi||previous.occurrence!==n.occurrence));if(explicit)carry=n.volume;
+        const transient=['sf','sfz','rfz','fp'].includes(n.e.dynamic);if(transient){n.attackVolume=n.volume;n.volume=n.baseVolume;}const explicit=(!transient&&n.e.dynamic)||(s.measures[n.mi].dynamic&&(!previous||previous.mi!==n.mi||previous.occurrence!==n.occurrence));if(explicit)carry=n.volume;
         const ramp=ramps.find(r=>n.sequence>=r.from&&n.sequence<=r.to&&r.end>r.start),position=at(n);
         if(ramp){let p=parameters.get(ramp.key);if(!p){const base=carry??n.volume,end=ramp.target??(ramp.kind==='crescendo'?Math.min(1,Math.max(base+.18,base*1.5)):Math.max(.035,base*.5));p={base,end,start:ramp.start};parameters.set(ramp.key,p);}else if(explicit&&position<ramp.end&&position>p.start){p.base=n.volume;p.start=position;}
           const value=b=>p.base+(p.end-p.base)*Math.max(0,Math.min(1,(b-p.start)/Math.max(EPS,ramp.end-p.start)));
