@@ -3,7 +3,7 @@ const Jianpu=(()=>{
   const C=typeof MusicCore==='undefined'?require('./core.js'):MusicCore;
   const base=c=>28+C.LETTERS.indexOf(C.MAJOR[c.key+7][0]);
   function describe(pitch,acc,c,shift=0){const distance=pitch+shift*7-base(c),degree=((distance%7)+7)%7+1,octave=Math.floor(distance/7),alter=acc-(C.keyMap(c.key)[C.letter(pitch)]||0);return {degree,octave,alter};}
-  function rhythm(e){const beats=e.tuplet||e.triplet||e.exactTicks!==null&&e.exactTicks!==undefined?192/e.duration*C.dotFactor(C.dots(e))/48:C.ticks(e)/48,short=e.duration>=4;
+  function rhythm(e){const beats=e.tuplet||e.triplet?192/e.duration*C.dotFactor(C.dots(e))/48:C.ticks(e)/48,short=e.duration>=4;
     if(short)return {tokens:1,lines:Math.max(0,Math.log2(e.duration)-2),dots:C.dots(e),beats};
     const tokens=Math.max(1,Math.floor(beats+1e-7)),fraction=beats-tokens;let dots=0;for(let i=1;i<=3;i++)if(C.close(fraction,1-Math.pow(2,-i)))dots=i;return {tokens,lines:0,dots,beats};
   }
@@ -47,9 +47,41 @@ function jianpuClick(event){if(Date.now()<suppressClickUntil)return;hideMenu();c
   if(t?.type==='note'){const index=t.toneIndex??toneIndexAt(notePositions.get(t.id),point);select(t.id,add,index);jianpuChordTarget=selectedNotes.has(t.id)?t.id:null;const f=findNote(t.id),n=M.resolved(score).find(n=>n.e.id===t.id),tone=n?.tones[index];if(tone)jianpuOctave=Jianpu.describe(tone.pitch,tone.acc,config(f.mi,f.e.voice),n.shift).octave;t.toneIndex=index;queueHoverMenu(t,event.clientX,event.clientY);}
   else if(t?.type==='symbol'){selectSymbol(t,add);jianpuChordTarget=null;queueHoverMenu(t,event.clientX,event.clientY);}else if(t?.type==='measure'){const g=geometry.find(g=>g.mi===t.mi&&g.voice===t.voice);selectMeasure(t.mi,t.voice,add);jianpuChordTarget=null;jianpuCursor={mi:t.mi,beforeId:g?.positions.find(p=>p.x>point.x&&!p.e.placeholder)?.e.id||null};queueHoverMenu(t,event.clientX,event.clientY);}else{clearSelection();jianpuChordTarget=null;render();}$('score').focus({preventScroll:true});
 }
+function setJianpuTicks(e,ticks){if(!Number.isFinite(ticks)||ticks<=M.EPS||ticks>3072)throw Error('时值超出支持范围。');const rhythm=M.fragment(ticks);Object.assign(e,{duration:rhythm.duration,dots:rhythm.dots,dotted:false,exactTicks:rhythm.exactTicks,triplet:false,tuplet:null,positionRatio:null,placeholder:false});}
+function detachJianpuTuplets(list){const groups=new Set(list.map(e=>e.tuplet?.id).filter(Boolean));if(groups.size)score.measures.flatMap(m=>m.events).filter(e=>groups.has(e.tuplet?.id)).forEach(e=>setJianpuTicks(e,M.ticks(e)));}
+function previousJianpuNote(){const beforeId=jianpuCursor?.mi===currentMeasure?jianpuCursor.beforeId:null,sequence=score.measures.slice(0,currentMeasure+1).flatMap(m=>M.events(score,m,activeVoice)).filter(e=>!e.placeholder),at=beforeId?sequence.findIndex(e=>e.id===beforeId):-1;return (at>=0?sequence.slice(0,at):sequence).at(-1);}
+function jianpuEnter(){
+  if(notation!=='jianpu')return;hideMenu();cancelGesture();const selectedEvents=selectedList();
+  if(selectedNotes.size>=2){
+    const voice=selectedEvents[0]?.voice;if(!voice||selectedEvents.length!==selectedNotes.size||selectedEvents.some(e=>e.voice!==voice)){toast('请选择同一声部中相邻的同音音符。');return;}
+    const part=M.resolved(score).filter(n=>n.voice===voice),chosen=part.filter(n=>selectedNotes.has(n.e.id)),first=chosen[0],last=chosen.at(-1),signature=n=>n.e.type==='rest'?'rest':n.tones.map(t=>[t.pitch+n.shift*7,t.acc].join(':')).sort().join(',');
+    if(chosen.some((n,i)=>i&&(n.sequence!==chosen[i-1].sequence+1||n.mi!==chosen[i-1].mi&&(n.mi!==chosen[i-1].mi+1||!M.close(chosen[i-1].beat+M.ticks(chosen[i-1].e),M.capacity(score,chosen[i-1].mi)))))){toast('所选音符不相邻，请连续选择，中间不能跳过音符或空拍。');return;}
+    if(chosen.some(n=>signature(n)!==signature(first))){toast('只能合并相同音高、八度和升降记号的音符；叠放组也须相同。');return;}
+    if(chosen.some(n=>n.e.type==='note'&&selectedIndices(n.e).size!==n.tones.length)){toast('合唱分组共用时值，请选中完整的叠放组再合并。');return;}
+    const total=chosen.reduce((sum,n)=>sum+M.ticks(n.e),0),removed=new Set(chosen.slice(1).map(n=>n.e.id)),next=part[last.sequence+1],merged=first.e,originalTones=new Map(part.map(n=>[n.e.id,n.tones]));
+    commit(()=>{
+      detachJianpuTuplets(chosen.map(n=>n.e));setJianpuTicks(merged,total);merged.tie=last.e.tie;
+      merged.lyric=[...new Set(chosen.map(n=>n.e.lyric).filter(Boolean))].join(' ').slice(0,80);
+      for(const key of ['dynamic','expression','articulation','ornament','slur'])if(!merged[key])merged[key]=chosen.find(n=>n.e[key])?.e[key]||'';
+      merged.graceNotes=chosen.flatMap(n=>(n.e.graceNotes||[]).map((g,i)=>({...g,accidental:n.graces[i].acc})));if(merged.graceNotes.length>16)throw Error('合并后的倚音超过 16 个，请先减少倚音。');
+      for(const key of ['hairpin','glissando','pedal']){const ref=key==='hairpin'?'hairpinTo':key==='pedal'?'pedalTo':'glissTo',later=chosen.slice(1).find(n=>n.e[key]);if(!merged[key]&&later){merged[key]=later.e[key];merged[ref]=later.e[ref];}}
+      score.measures.forEach(m=>m.events=m.events.filter(e=>!removed.has(e.id)));
+      const corrected=new Map();M.resolved(score).filter(n=>n.voice===voice).forEach(n=>{n.tones.forEach((t,i)=>{const original=originalTones.get(n.e.id)?.[i];if(original&&original.acc!==t.acc){if(i)n.e.chord[i-1].accidental=original.acc;else n.e.accidental=original.acc;if(!corrected.has(n.e.id))corrected.set(n.e.id,new Set());corrected.get(n.e.id).add(i);}});});
+      if(corrected.size)M.resolved(score).filter(n=>corrected.has(n.e.id)).forEach(n=>n.tones.forEach((t,i)=>{if(corrected.get(n.e.id).has(i)&&t.redundant){if(i)n.e.chord[i-1].accidental=null;else n.e.accidental=null;}}));
+      score.measures.flatMap(m=>m.events).forEach(e=>{for(const ref of ['hairpinTo','glissTo','pedalTo'])if(removed.has(e[ref]))e[ref]=merged.id;if(e.hairpinTo===e.id){e.hairpin='';e.hairpinTo='';}if(e.glissTo===e.id){e.glissando='';e.glissTo='';}if(e.pedalTo===e.id){e.pedal=false;e.pedalTo='';}});
+      const slurs=new Map();score.measures.flatMap(m=>m.events).forEach(e=>{if(e.slur){if(!slurs.has(e.slur))slurs.set(e.slur,[]);slurs.get(e.slur).push(e);}});slurs.forEach(es=>{if(es.length<2)es.forEach(e=>e.slur='');});
+      focusMeasure(first.mi,voice);clearSelection();putNoteSelection(merged.id);jianpuCursor={mi:first.mi,beforeId:next?.mi===first.mi?next.e.id:null};jianpuChordTarget=null;jianpuRhythmOverride=false;defaults.duration=merged.duration;defaults.dots=merged.dots;
+    });
+  }else{
+    const previous=selectedEvents[0]||previousJianpuNote();if(!previous){toast('请先输入音符或休止符。');return;}const ticks=M.ticks(previous)+48;
+    commit(()=>{detachJianpuTuplets([previous]);setJianpuTicks(previous,ticks);defaults.duration=previous.duration;defaults.dots=previous.dots;jianpuRhythmOverride=false;});
+  }
+  $('score').focus({preventScroll:true});
+}
 function handleScoreKeydown(event){if(document.querySelector('dialog[open]'))return;const field=event.target.closest?.('[data-score-setting]');if(field&&['Enter',' '].includes(event.key)){event.preventDefault();openScoreSetting(field,null);return;}const text=event.target.matches('input,select,textarea');if(event.key==='Tab'&&event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.altKey){event.preventDefault();requestNotation(notation==='staff'?'jianpu':'staff');return;}if(event.key==='Tab'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&notation==='staff'){event.preventDefault();toggleMode();return;}if(text)return;
   if(event.key==='Escape'){event.preventDefault();cancelGesture();symbolTool=null;symbolStart=null;jianpuChordTarget=null;clearSelection();render();return;}
   if(event.ctrlKey||event.metaKey){if(event.key.toLowerCase()==='z'){event.preventDefault();history(event.shiftKey?1:-1);}if(event.key.toLowerCase()==='y'){event.preventDefault();history(1);}return;}
+  if(notation==='jianpu'&&event.key==='Enter'){event.preventDefault();jianpuEnter();return;}
   if(notation==='jianpu'&&/^[0-7]$/.test(event.key)){event.preventDefault();appendKeyboardNote(Number(event.key));return;}
   if(mode==='select'&&(event.key==='Delete'||event.key==='Backspace')){event.preventDefault();deleteSelected();jianpuChordTarget=null;}
   if(['ArrowUp','ArrowDown'].includes(event.key)&&(mode==='select'||notation==='jianpu')){event.preventDefault();const amount=event.key==='ArrowUp'?1:-1;if(notation==='jianpu'&&!selectedNotes.size)jianpuOctave=Math.max(-4,Math.min(4,jianpuOctave+amount));else movePitch(amount*(notation==='jianpu'?7:1));}
