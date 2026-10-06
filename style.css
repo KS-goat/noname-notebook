@@ -9,3 +9,5 @@ dialog{border:1px solid var(--border);border-radius:12px;padding:28px;max-width:
 @media print{body{background:#fff}header,.settings,.toolbar,.symbol-toolbar,.voice-toolbar,.advanced,.validation,footer,.score-heading,#toast,.context-menu{display:none!important}main{padding:0}.workspace{padding:0;border:0}#score{overflow:visible}#score svg{min-width:0;width:100%!important}.note-halo,.measure-status{display:none}.current-measure .measure-click,.selected-measure .measure-click{fill:transparent;stroke:none}.selected .note-ink{fill:var(--text);stroke:var(--text)}.selected-symbol text{fill:var(--text)}.selected-symbol path:not(.symbol-hit),.selected-symbol line{stroke:#5c635d}}
 
 .note-head-hit{fill:transparent;stroke:none;pointer-events:all}.beam-ink{fill:var(--text)}.note-stem{pointer-events:stroke}.phrasing-line,.hairpin-line,.glissando-line{pointer-events:none}#graceInput{min-width:95px}
+
+#score[data-mode=edit]{user-select:none}#score[data-mode=edit] .note-group{cursor:crosshair}
