@@ -58,7 +58,32 @@
       src.forEach(n=>{if(n.e.dynamic)dynamics[n.voice]=n.e.dynamic;const start=cursor+mapBeat(n.beat)/48*60/bpm,end=cursor+mapBeat(n.beat+ticks(n.e))/48*60/bpm;out.push({...n,occurrence,pass:visit.pass,start,seconds:end-start,volume:volume[dynamics[n.voice]||'mf']});});cursor+=mapBeat(length)/48*60/bpm;
     });
     voices(s).forEach(v=>{const part=out.filter(n=>n.voice===v.id);part.forEach((n,i)=>{const next=part[i+1];n.validTie=!!n.e.tie&&n.midi!==null&&next?.midi===n.midi&&next.sequence===n.sequence+1&&close(n.start+n.seconds,next.start);if(n.validTie&&n.tones.map(t=>t.midi).sort().join(',')!==next.tones.map(t=>t.midi).sort().join(','))n.validTie=false;n.next=next||null;n.continuation=i>0&&part[i-1].validTie;});});
+    applyDynamicRamps(s,source,out,volume);
     out.sort((a,b)=>a.start-b.start||voices(s).findIndex(v=>v.id===a.voice)-voices(s).findIndex(v=>v.id===b.voice));return {notes:out,seconds:source.length?cursor:0,route:rr.route,warnings:rr.warnings};
+  }
+  function applyDynamicRamps(s,source,out,levels){
+    const starts=[];let beat=0;s.measures.forEach((m,mi)=>{starts.push(beat);beat+=Math.max(capacity(s,mi),...voices(s).map(v=>events(s,m,v.id).reduce((n,e)=>n+ticks(e),0)));});
+    const kindOf=text=>['cresc.','crescendo'].includes(text)?'crescendo':['dim.','diminuendo','decresc.'].includes(text)?'diminuendo':null;
+    voices(s).forEach(v=>{
+      const written=source.filter(n=>n.voice===v.id),byId=new Map(written.map(n=>[n.e.id,n])),ramps=[],at=n=>starts[n.mi]+n.beat;
+      written.forEach((n,i)=>{
+        if(n.e.hairpin){const end=n.e.hairpinTo?byId.get(n.e.hairpinTo):written[i+1];if(end&&end.sequence>n.sequence)ramps.push({key:'h:'+n.e.id,kind:n.e.hairpin,from:n.sequence,to:end.sequence,start:at(n),end:at(end),priority:3,target:levels[end.e.dynamic||((end.mi!==n.mi&&s.measures[end.mi].dynamic)||'')]});}
+        const text=n.e.expression||(i===0||written[i-1].mi!==n.mi?s.measures[n.mi].expression:''),kind=kindOf(text);
+        if(kind){const end=written.slice(i+1).find(p=>p.e.dynamic||kindOf(p.e.expression)||p.e.hairpin||(p.mi!==n.mi&&(s.measures[p.mi].dynamic||kindOf(s.measures[p.mi].expression))))||written.at(-1),target=levels[end.e.dynamic||((end.mi!==n.mi&&s.measures[end.mi].dynamic)||'')];ramps.push({key:'t:'+n.e.id,kind,from:n.sequence,to:end.sequence,start:at(n),end:at(end)+(end.sequence===written.at(-1).sequence&&!target?ticks(end.e):0),priority:1,target});}
+      });
+      s.measures.forEach((m,mi)=>{const h=m.hairpins?.[v.id],notes=written.filter(n=>n.mi===mi);if(h&&notes.length)ramps.push({key:'m:'+m.id,kind:h.kind,from:notes[0].sequence,to:notes.at(-1).sequence,start:starts[mi],end:starts[mi]+capacity(s,mi),priority:2});});
+      ramps.sort((a,b)=>b.priority-a.priority||b.start-a.start);let previous=null,carry=null;const parameters=new Map();
+      out.filter(n=>n.voice===v.id).forEach(n=>{
+        if(previous&&n.sequence<=previous.sequence){parameters.clear();carry=null;}
+        const explicit=n.e.dynamic||(s.measures[n.mi].dynamic&&(!previous||previous.mi!==n.mi||previous.occurrence!==n.occurrence));if(explicit)carry=n.volume;
+        const ramp=ramps.find(r=>n.sequence>=r.from&&n.sequence<=r.to&&r.end>r.start),position=at(n);
+        if(ramp){let p=parameters.get(ramp.key);if(!p){const base=carry??n.volume,end=ramp.target??(ramp.kind==='crescendo'?Math.min(1,Math.max(base+.18,base*1.5)):Math.max(.035,base*.5));p={base,end,start:ramp.start};parameters.set(ramp.key,p);}else if(explicit&&position<ramp.end&&position>p.start){p.base=n.volume;p.start=position;}
+          const value=b=>p.base+(p.end-p.base)*Math.max(0,Math.min(1,(b-p.start)/Math.max(EPS,ramp.end-p.start)));
+          n.volume=value(position);n.volumeEnd=value(position+ticks(n.e));n.volumeRampEnd=n.seconds*Math.max(0,Math.min(1,(ramp.end-position)/ticks(n.e)));carry=n.volumeEnd;
+        }else{n.volume=carry??n.volume;n.volumeEnd=n.volume;}
+        previous=n;
+      });
+    });
   }
   function stats(s){const notes=resolved(s).flatMap(n=>[...n.tones,...n.graces].map(t=>({...t,e:n.e}))),sorted=[...notes].sort((a,b)=>a.midi-b.midi);return {count:notes.length,highest:sorted.at(-1)?.name||'—',lowest:sorted[0]?.name||'—',seconds:timeline(s).seconds,highestId:sorted.at(-1)?.e.id,lowestId:sorted[0]?.e.id};}
   function validate(s){const issues=[],r=resolved(s);

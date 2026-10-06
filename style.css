@@ -11,3 +11,5 @@ dialog{border:1px solid var(--border);border-radius:12px;padding:28px;max-width:
 .note-head-hit{fill:transparent;stroke:none;pointer-events:all}.beam-ink{fill:var(--text)}.note-stem{pointer-events:stroke}.phrasing-line,.hairpin-line,.glissando-line{pointer-events:none}#graceInput{min-width:95px}
 
 #score[data-mode=edit]{user-select:none}#score[data-mode=edit] .note-group{cursor:crosshair}
+
+#score{user-select:none}#score[data-mode=select] svg{touch-action:none}.tone-halo{fill:transparent;stroke:none;pointer-events:none}.selected-tone .tone-halo{fill:#e3efe6}.selected-tone .note-ink{fill:var(--accent);stroke:var(--accent)}.selection-box{fill:#c4decc88;stroke:#38624f;stroke-width:1;stroke-dasharray:4 2}.range-preview{fill:none;stroke:#38624f;stroke-width:2;stroke-dasharray:5 3}@media print{.tone-halo{display:none}.selected-tone .note-ink{fill:var(--text);stroke:var(--text)}.selection-box,.range-preview{display:none}}
