@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f3ef"><title>谱记 · 五线谱记谱器</title><link rel="stylesheet" href="style.css?rev=selection-dynamics-8"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f3ef"><title>谱记 · 五线谱记谱器</title><link rel="stylesheet" href="style.css?rev=choir-jianpu-9"></head>
 <body>
-<header><div class="brand"><span class="brand-mark">𝄞</span><div><h1>谱记</h1><small>把音乐写下来</small></div></div><input id="title" aria-label="作品名称" maxlength="80"><div class="header-actions"><span id="saveState" role="status">本机自动保存</span><button id="help">使用说明</button><button id="export">导出</button><button id="import">打开</button><button id="new">新建</button><input id="file" type="file" accept=".json,.score" hidden></div></header>
+<header><div class="brand" aria-label="记谱器"><span class="brand-mark" aria-hidden="true">𝄞</span></div><input id="title" aria-label="作品名称" maxlength="80"><div class="header-actions"><span id="saveState" role="status">本机自动保存</span><button id="help">使用说明</button><button id="export">导出</button><button id="import">打开</button><button id="new">新建</button><input id="file" type="file" accept=".json,.score" hidden></div></header>
 <main>
 <section class="settings" aria-label="当前小节设置">
 <label>调式<select id="mode"><option value="major">大调</option><option value="minor">小调</option></select></label>
@@ -11,14 +11,14 @@
 <span id="keySummary" class="key-summary"></span><div class="playback"><button id="play" class="primary">▶ 播放</button><button id="stop" disabled>■ 停止</button><span id="playTime">0:00</span></div>
 </section>
 <section class="toolbar" aria-label="输入工具">
-<button id="modeToggle" class="active" title="Tab 切换编辑与选择模式">编辑模式 · Tab</button>
+<button id="notationToggle">五线谱</button><button id="modeToggle" class="active">编辑模式</button><button id="toJianpu" class="conversion-button">一键转简谱</button><button id="toStaff" class="conversion-button" hidden>一键转五线谱</button>
 <div class="tool-group durations" id="durations" aria-label="时值"><button data-duration="1">𝅝 <small>全</small></button><button data-duration="2">𝅗𝅥 <small>二分</small></button><button data-duration="4" class="active">♩ <small>四分</small></button><button data-duration="8">♪ <small>八分</small></button><button data-duration="16">♬ <small>十六</small></button><button data-duration="32">♬ <small>三十二</small></button><button data-duration="64">♬ <small>六十四</small></button></div>
 <label class="inline-label">附点<select id="dots"><option value="0">无</option><option value="1">附点 ·</option><option value="2">复附点 ··</option><option value="3">三附点 ···</option></select></label><button id="tupletsToggle">连音</button><label class="inline-label">倚音<select id="graceInput"><option value="">关闭</option><option value="plain">倚音</option><option value="slashed">短倚音 ／</option></select></label>
 <div class="tool-group"><button id="undo" title="Ctrl+Z">↶</button><button id="redo" title="Ctrl+Y">↷</button><button id="addMeasure">＋ 小节</button></div>
 </section>
 <section class="symbol-toolbar" aria-label="直接添加符号">
 <div class="tool-group"><button data-symbol="ottava" data-value="1">8va</button><button data-symbol="ottava" data-value="-1">8vb</button><button data-symbol="ottava" data-value="2">15ma</button><button data-symbol="ottava" data-value="-2">15mb</button><button data-symbol="slur" data-value="add">⌒ 圆滑线</button><button data-symbol="tie" data-value="true">⌒ 延音线</button></div>
-<div class="tool-group"><button data-symbol="hairpin" data-value="&quot;crescendo&quot;" title="渐强线">＜</button><button data-symbol="hairpin" data-value="&quot;diminuendo&quot;" title="渐弱线">＞</button><button data-symbol="glissando" data-value="&quot;straight&quot;" title="直线滑音">╱ 滑音</button><button data-symbol="glissando" data-value="&quot;wavy&quot;" title="波浪线滑音">∿</button><button data-symbol="arpeggio" data-value="&quot;plain&quot;" title="琶音">𝆃 琶音</button></div>
+<div class="tool-group"><button data-symbol="hairpin" data-value="&quot;crescendo&quot;" title="渐强线">＜</button><button data-symbol="hairpin" data-value="&quot;diminuendo&quot;" title="渐弱线">＞</button><button data-symbol="glissando" data-value="&quot;straight&quot;" title="直线滑音">╱ 滑音</button><button data-symbol="glissando" data-value="&quot;wavy&quot;" title="波浪线滑音">∿</button><button data-symbol="arpeggio" data-value="&quot;plain&quot;" title="琶音">𝆃 琶音</button><button data-symbol="pedal" data-value="true" title="延音踏板">Ped. 踏板</button></div>
 <div class="tool-group"><button data-symbol="repeatStart" data-value="true" title="反复起点">𝄆</button><button data-symbol="repeatEnd" data-value="2" title="反复终点，默认两遍">𝄇</button><label class="inline-label">反复次数<input id="repeatTimes" type="number" min="2" max="8" value="2"></label></div>
 <label class="inline-label">结尾<select id="endingTool"><option value="">选择符号</option><option value="1">1. 第一结尾</option><option value="2">2. 第二结尾</option><option value="3">3. 第三结尾</option><option value="1,2">1,2. 结尾</option><option value="2,3">2,3. 结尾</option><option value="clear">取消结尾</option></select></label>
 <label class="inline-label">返回<select id="navigationTool"><option value="">选择符号</option><option value="segno">𝄋 Segno</option><option value="coda">𝄌 Coda</option><option value="to-coda">To Coda</option><option value="fine">Fine</option><option value="dc-fine">D.C. al Fine</option><option value="ds-fine">D.S. al Fine</option><option value="dc-coda">D.C. al Coda</option><option value="ds-coda">D.S. al Coda</option><option value="clear">取消返回</option></select></label>
@@ -36,19 +36,20 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <dialog id="scopeDialog"><h2>将修改应用到当前小节还是之后的所有小节？</h2><p id="scopeDescription"></p><div class="dialog-actions"><button id="cancelScope">取消</button><button id="scopeCurrent">当前小节</button><button id="scopeFollowing" class="primary">之后的所有小节（含当前）</button></div></dialog>
 <dialog id="helpDialog"><div class="dialog-heading"><h2>使用说明</h2><button id="closeHelp" aria-label="关闭">✕</button></div>
-<ol><li>按 Tab 切换编辑模式和选择模式，也可点击模式按钮。编辑模式不能选择对象，鼠标悬停会显示音高和落点；在空白处点击添加音符；点击音符头部变为相同时值的休止符，再点休止符删除。点击同一时点的其他谱位为该音符添加和弦音，和弦共用时值和符干。时值和附点在工具栏设置。</li>
+<ol><li>按 Tab 切换编辑模式和选择模式，也可点击模式按钮。编辑模式不能选择对象，鼠标悬停会显示音高和落点；在空白处点击添加音符；点击音符头部变为相同时值的休止符，再点休止符删除。点击同一时点的其他谱位为该音符添加和弦音，和弦共用时值和符干。时值和附点在工具栏设置。编辑模式按空格快速输入一个四分音符的中央 C。</li>
 <li>选择模式点击音符或小节空白处选中，再点已选对象取消选择。和弦单击选中一个音，双击选中整个和弦；Ctrl 点击多选，可拖动鼠标框选，Ctrl 拖动追加选择。Delete 删除所选音符；↑／↓移动一个谱位，←将时值减半，→将时值加倍。和弦内各音共用时值。Ctrl+Z 撤销，Ctrl+Y 重做。</li>
 <li>选中小节后修改调号、调式、拍号、速度或当前声部谱号，会询问应用范围。“之后的所有小节”包括当前小节。多选小节时，“当前小节”作用于选中的小节，“之后”从最早选中的小节开始。</li>
 <li>在选择模式下，鼠标悬停在选中的音符或小节上约半秒后，出现升降记号、力度、表情、奏法等列表。编辑模式输入音符时不弹出列表。悬停或点击类别可在右侧展开选项。在歌词一栏输入文字，按 Enter 保存；歌词显示在音符下方。离开选中对象和菜单后列表收起。</li>
-<li>八度线、圆滑线、延音线、反复与返回符号直接位于工具栏。已有选择时直接应用；无选择时先点符号再点谱面目标。八度线、圆滑线、延音线、渐强渐弱线和滑音可连续点击第一个与最后一个音符，或从起点音符拖动到终点，形成范围；同一声部内的中间音符会加入。按 Esc 或“取消符号放置”退出。符号可直接选中后在悬停菜单中修改或删除。</li>
-<li>点“＋ 声部”添加独立谱表，按需要命名为乐器或声部。点击谱表或声部名称切换编辑对象。谱号可以按小节更改；支持静音和只播放当前声部。</li>
+<li>八度线、圆滑线、延音线、反复与返回符号直接位于工具栏。已有选择时直接应用；无选择时先点符号再点谱面目标。八度线、圆滑线、延音线、渐强渐弱线、滑音和踏板可连续点击第一个与最后一个音符，或从起点音符拖动到终点，形成范围；同一声部内的中间音符会加入。完成起点和终点选择后立即回到选择模式；Esc 或“取消符号放置”可中途取消。符号可直接选中后在悬停菜单中修改或删除。</li>
+<li>点“＋ 声部”添加独立谱表，按需要命名为乐器或声部。点击谱表或声部名称切换编辑对象。谱号可以按小节更改；支持静音和只播放当前声部。各声部可以独立录入；整行没有音符的声部会隐藏，选择该声部后会展开当前行供编辑。</li>
 <li>连音支持 2–32 个音，可输入数字或拖动滑条，并设置整组总时值。Ctrl 多选连续音符后应用连音，或从一个音符开始应用到后续音符；也可直接插入新组。组内每音均分总时值；若每音恰好等于普通音符或附点音符，则直接使用普通时值，不显示连音括号。附点支持单附点、复附点、三附点。</li>
-<li>短音符按拍自动连接符梁，可在选择菜单中手动连接或断开。小节填满、切换小节或退出编辑时自动排布。圆滑线自动避开音符、符干和符梁。渐强／渐弱线与 cresc.、dim. 文字独立添加。滑音先点起点再点终点；琶音标在和弦左侧。选择倚音工具后，在主音左侧点击谱位添加，完成后将工具设为“关闭”。编辑模式点击一个倚音或奏法符号即可将其删除。倚音不占小节拍数，播放从主音时值中分配短暂时间。</li>
-<li>输入时自动提示时值、重复升降号、连音组和反复等错误。一键修正支持撤销。播放时空缺小节保留空拍，延长记号为 1.5 倍时值；八度线、反复、小节速度和力度影响钢琴播放，渐强渐弱线及 cresc.、dim. 文字会产生渐变音量；歌词、其他表情文字、装饰音作为谱面标注。</li></ol>
+<li>短音符按拍自动连接符梁，可在选择菜单中手动连接或断开。小节填满、切换小节或退出编辑时自动排布。圆滑线自动避开音符、符干和符梁。渐强／渐弱线与 cresc.、dim. 文字独立添加。渐强的起点力度大于终点、或渐弱的起点力度小于终点时会报错。滑音先点起点再点终点；琶音标在和弦左侧。选择倚音工具后，在主音左侧点击谱位添加，完成后将工具设为“关闭”。编辑模式点击一个倚音或奏法符号即可将其删除。倚音不占小节拍数，播放从主音时值中分配短暂时间。</li>
+<li>输入时自动提示时值、重复升降号、连音组和反复等错误。一键修正支持撤销。播放时空缺小节保留空拍，延长记号为 1.5 倍时值；八度线、反复、小节速度和力度影响钢琴播放，渐强渐弱线及 cresc.、dim. 文字会产生渐变音量；歌词、其他表情文字、装饰音作为谱面标注。</li><li>按 Shift+Tab 切换五线谱与简谱，或点击谱式按钮及“一键转…”按钮。简谱用数字键 1–7 输入音级、0 输入休止符；连续键入即连续添加，不需确认。未另设时值时沿用前一个音符的时值，填满小节后继续输入到下一小节。单击已有数字选择，再输入数字就在该时点上下叠放，适合分组演唱；点击空白处后继续录入旋律。↑／↓改变所选数字的八度，←／→将时值减半／加倍。没有选择时，↑／↓设置接下来输入的八度。</li><li>简谱以四分音符为基准，数字下方的横线每增加一条，时值减半；右侧每条延长横线增加一拍，右侧附点增加对应时值的一半。高低八度用数字上方／下方的点表示；长休止用多个 0 表示。调号以 1=… 标示，小调另注明 6=…，用相对大调的音级记法。转换保留实际音高、时值、声部和歌词；简谱不显示琶音、滑音、踏板等器乐符号，转换前会列出相关符号的位置供选择。</li></ol>
 <p>音符数统计所有谱表中的实际音符，反复不重复计数；音域包括调号、临时升降号、八度线与八度谱号；播放时长包含反复、空拍和延长。旧版文件可直接打开。作品在本浏览器保存，桌面版与网页版可通过导出／打开交换作品。</p>
-<p>乐理参考：<a href="https://musictheory.pugetsound.edu/mt21c/DotsAndTies.html" target="_blank" rel="noopener">附点与延音</a> · <a href="https://musictheory.pugetsound.edu/mt21c/Tuplets.html" target="_blank" rel="noopener">连音组</a> · <a href="https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/octave-shift/" target="_blank" rel="noopener">八度线</a> · <a href="https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/repeat/" target="_blank" rel="noopener">反复</a>。</p>
+<p>乐理参考：<a href="https://ssb22.user.srcf.net/mwrhome/jianpu-ly.html" target="_blank" rel="noopener">简谱记法</a> · <a href="https://www.everyonepiano.cn/Article-129.html" target="_blank" rel="noopener">简谱基础</a> · <a href="https://musictheory.pugetsound.edu/mt21c/DotsAndTies.html" target="_blank" rel="noopener">附点与延音</a> · <a href="https://musictheory.pugetsound.edu/mt21c/Tuplets.html" target="_blank" rel="noopener">连音组</a> · <a href="https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/octave-shift/" target="_blank" rel="noopener">八度线</a> · <a href="https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/repeat/" target="_blank" rel="noopener">反复</a>。</p>
 <p class="subtle">钢琴：Salamander Grand Piano，Alexander Holm，CC BY 3.0。<a href="https://rytmenpinne.wordpress.com/sounds-and-such/salamander-grandpiano/" target="_blank" rel="noopener">原作者</a> · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">许可</a>。Bravura 字体：Steinberg，SIL OFL 1.1。</p></dialog>
+<dialog id="conversionDialog"><h2>某些符号会被删去</h2><p>以下符号不在简谱中显示。继续转换会删除这些符号；可通过撤销恢复。</p><ul id="conversionList"></ul><div class="dialog-actions"><button id="cancelConversion" class="conversion-cancel">放弃</button><button id="continueConversion" class="conversion-continue">忽略并继续</button></div></dialog>
 <dialog id="confirmDialog"><h2 id="confirmTitle">确认修改</h2><p id="confirmText"></p><div class="dialog-actions"><button id="cancelConfirm">取消</button><button id="acceptConfirm" class="primary">应用修改</button></div></dialog>
-<script src="core.js?rev=selection-dynamics-8"></script><script src="samples.js"></script><script src="app.js?rev=selection-dynamics-8"></script>
+<script src="core.js?rev=choir-jianpu-9"></script><script src="samples.js"></script><script src="jianpu.js?rev=choir-jianpu-9"></script><script src="app.js?rev=choir-jianpu-9"></script>
 </body></html>
 

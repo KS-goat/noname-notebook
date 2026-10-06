@@ -1,35 +1,40 @@
-# 谱记 · 五线谱记谱器
+# 五线谱与简谱记谱器
 
-简洁的浏览器记谱工具，支持多声部、每小节调号与拍号、歌词、和弦、符梁、连音、附点、倚音、滑音、琶音、渐强渐弱、八度线、反复符号和钢琴播放。无需服务器或安装依赖。
+浏览器记谱工具，支持多声部、歌词、和弦与合唱分组、每小节调号和拍号、附点、连音、力度、表情、反复、渐强渐弱及钢琴播放。五线谱还支持倚音、滑音、琶音、八度线和踏板。无需服务器或安装依赖。
 
-## 使用
+## 输入与选择
 
-打开 `index.html` 即可使用。Tab 切换编辑与选择模式；编辑模式不能选择对象；悬停在音符或空白谱位显示音高和落点。点击空白谱位添加音符，点击音符头变为同样时值的休止符，再点休止符删除；点击同一时点的其他音高添加和弦音。选择模式再点所选对象取消；和弦单击选单音、双击选整个和弦。Ctrl 多选，拖动框选，Ctrl 拖动追加选择。↑／↓移动所选音符一个谱位，←将时值减半、→将时值加倍；和弦内时值共用。悬停在已选音符或小节约半秒后显示详细选项。移出音符与菜单后收起，输入音符时不会自动弹出。
+打开 index.html 即可使用。Tab 切换五线谱的编辑与选择模式；Shift+Tab 切换五线谱与简谱。界面按钮仅显示当前模式。紫色“一键转…”按钮也可切换谱式。转为简谱前，如存在琶音、滑音、踏板、拨奏、弓奏等器乐符号，先列出种类、声部、小节与音符位置，选择“忽略并继续”后删除，或“放弃”保留原谱；转换可撤销。
 
-短音符自动连接符梁，圆滑线自动调整方向与距离。小节填满或结束编辑后自动排布。渐强、渐弱线与 cresc.、dim. 文本独立添加，并在钢琴播放中产生渐变音量。跨度符号可在按下工具按钮后点击起点和终点，或从第一个音符拖到最后一个音符；保留选中后直接应用的方式。编辑模式点击倚音或奏法符号删除。倚音工具用于在已有主音前添加小音符；滑音可点起点和终点，Ctrl 选择同一拍点的不同谱表和弦后添加琶音可生成跨谱表琶音线。能够使用普通音符表达的均分时值不显示连音数字。
+五线谱编辑模式点击空白谱位添加音符，点击音符头变为同样时值的休止符，再点休止符删除；同一时点的其他谱位添加和弦音。空格快速输入实际音高 C4 的四分音符。鼠标悬停显示音高与落点。选择模式单击和弦选单音、双击选全和弦；再点已选对象取消。Ctrl 多选、拖动框选、Ctrl 拖动增选。↑／↓移动一个谱位，←／→时值减半／加倍。
 
-作品自动保存在当前浏览器，可通过导出／打开 `.score.json` 文件交换作品。不同网址和离线文件的作品不会自动同步。
+简谱键入 1–7 直接添加音级、0 添加休止符，无需确认；未另外设置时值时，沿用直接前一个音符的时值。小节填满后继续输入到下一小节。点击已有数字选中，再输入一个音级就在该时点叠放数字，可继续添加合唱分组，支持同音叠放。点击空白处继续录入旋律。↑／↓将所选数字移动八度；未选择时调整接下来输入的八度。←／→将所选时值减半／加倍。叠放数字共用时值，选中的音高可独立修改。简谱保留力度、表情、连音、圆滑线、延音线、反复、歌词等合唱功能。
 
-## 发布到 GitHub Pages
+已选音符或小节悬停约半秒后出现详细菜单；离开后收起，键入时不自动弹出。选中小节后改调号、拍号或速度等，询问应用于当前小节或之后全部小节，后者含当前。各声部独立录入，未输入的声部不要求补齐时值；整行无音符的声部自动隐藏，选中声部后展开当前行供编辑。
 
-将本目录中的文件上传到仓库根目录，确保 `index.html` 位于根目录。
+跨度符号可选中后应用，也可先按工具按钮再点击起点与终点，或从起点拖到终点；完成后立即回到选择模式。渐强渐弱线和 cresc.、dim. 独立添加并影响播放。渐强起点比终点更强或渐弱起点比终点更弱时会报错并提供修正。Ped. 踏板按起点、终点添加，并延长区间内钢琴声音。
 
-进入仓库 **Settings → Pages**，将 Source 设置为 **Deploy from a branch**，Branch 设置为 **main**，目录设置为 **/(root)**，点击 **Save**。发布完成后，该页面会提供 **Visit site** 按钮和直接使用的网址。
+## 简谱记法
 
-官方文档：https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+数字默认一个四分拍；下方每增加一条横线，时值减半；右侧每条延长横线增加一拍；附点按相应基本时值增加一半。长休止写作重复的 0。数字上、下的点表示高、低八度。1=… 表示相对大调主音，小调额外标出 6=…。音高、节奏、歌词和声部共用同一数据，因此切换谱式保留实际音高与播放时值；八度线转成对应的八度点。
 
-## 代码
+参考：[Jianpu-ly 作者说明](https://ssb22.user.srcf.net/mwrhome/jianpu-ly.html)、[Everyone Piano 简谱教程](https://www.everyonepiano.cn/Article-129.html)。
 
-- `core.js`：音乐数据、节拍与时长计算、输入验证、播放路线。
-- `app.js`：谱面绘制、编辑交互、悬停菜单与钢琴播放。
-- `index.html`、`style.css`：页面与样式。
-- `samples.js`：嵌入的钢琴采样，无需外部音频服务。
-- `test-core.cjs`：使用 Node.js 执行 `node test-core.cjs` 可运行核心测试。
+## 保存与发布
 
-## 素材授权
+作品自动保存在当前浏览器，导出／打开 .score.json 可在桌面版和网页版交换。不同网址和离线文件的作品不会自动同步，旧版作品仍可打开。Ctrl+Z 撤销、Ctrl+Y 重做。
 
-钢琴采样：Salamander Grand Piano，Alexander Holm，CC BY 3.0。采样源自 Tone.js 分发版本。
-原作者：https://rytmenpinne.wordpress.com/sounds-and-such/salamander-grandpiano/
-许可：https://creativecommons.org/licenses/by/3.0/
+将此目录所有文件上传到 GitHub 仓库根目录，包含新增的 jianpu.js，同名文件可直接覆盖，无需先删除。进入 Settings → Pages，Source 选 Deploy from a branch，Branch 选 main，目录选 /(root)，Save。发布完成后 Visit site 提供网址。[GitHub 官方文档](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
 
-字体：Bravura，Steinberg，SIL OFL 1.1。许可全文见 `Bravura-LICENSE.txt`。
+## 文件
+
+- core.js：音乐数据、验证、时值、路线和钢琴音量包络。
+- jianpu.js：简谱记法、绘制、数字输入、谱式转换和踏板绘制。
+- app.js：五线谱绘制、共享交互、悬停菜单和钢琴播放。
+- index.html、style.css：页面和样式。
+- samples.js：嵌入钢琴采样，离线可播放。
+- test-core.cjs：Node.js 核心测试。
+
+## 素材
+
+钢琴采样：Salamander Grand Piano，Alexander Holm，CC BY 3.0，采样源自 Tone.js 分发版本。[原作者](https://rytmenpinne.wordpress.com/sounds-and-such/salamander-grandpiano/)、[许可](https://creativecommons.org/licenses/by/3.0/)。字体 Bravura：Steinberg，SIL OFL 1.1，许可全文见 Bravura-LICENSE.txt。
