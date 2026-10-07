@@ -1,18 +1,18 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f3ef"><title>谱记 · 五线谱记谱器</title><link rel="stylesheet" href="style.css?rev=unlimited-tempo-15"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f3ef"><title>谱记 · 五线谱记谱器</title><link rel="stylesheet" href="style.css?rev=measure-count-19"></head>
 <body>
 <header><div class="brand" aria-label="记谱器"><span class="brand-mark" aria-hidden="true">𝄞</span></div><button id="help" aria-expanded="false">帮助</button><input id="title" aria-label="作品名称" maxlength="80"><div class="header-actions"><span id="saveState" role="status">本机自动保存</span><div class="playback"><button id="play" class="primary">▶ 播放（P）</button><button id="stop" disabled>■ 停止（S）</button><span id="playTime">0:00</span></div><button id="export">导出</button><button id="import">打开</button><button id="new">新建</button><input id="file" type="file" accept=".json,.score" hidden></div></header>
 <main>
 <section class="toolbar" aria-label="输入工具">
 <button id="notationToggle">五线谱</button><button id="modeToggle" class="active">编辑模式</button><button id="toJianpu" class="conversion-button">一键转简谱</button><button id="toStaff" class="conversion-button" hidden>一键转五线谱</button>
 <label class="inline-label">附点<select id="dots"><option value="0">无</option><option value="1">附点 ·</option><option value="2">复附点 ··</option><option value="3">三附点 ···</option></select></label><button id="tupletsToggle">连音</button><label class="inline-label">倚音<select id="graceInput"><option value="">关闭</option><option value="plain">倚音</option><option value="slashed">短倚音 ／</option></select></label>
-<div class="tool-group"><button id="undo" title="Ctrl+Z">↶</button><button id="redo" title="Ctrl+Y">↷</button><button id="addMeasure">＋ 小节</button></div>
+<div class="tool-group"><button id="undo" title="Ctrl+Z">↶</button><button id="redo" title="Ctrl+Y">↷</button><label class="inline-label">小节数<input id="measureCount" type="number" min="1" max="300" step="1" value="1" aria-label="总小节数" title="输入总小节数，Enter 或离开输入框后应用"></label></div>
 </section>
 <section class="symbol-toolbar" aria-label="直接添加符号">
 <div class="tool-group"><button data-symbol="ottava" data-value="1">8va</button><button data-symbol="ottava" data-value="-1">8vb</button><button data-symbol="ottava" data-value="2">15ma</button><button data-symbol="ottava" data-value="-2">15mb</button><button data-symbol="phrase" data-value="&quot;auto&quot;">⌒ 连线</button></div>
 <div class="tool-group"><button data-symbol="hairpin" data-value="&quot;crescendo&quot;" title="渐强线">＜</button><button data-symbol="hairpin" data-value="&quot;diminuendo&quot;" title="渐弱线">＞</button><button data-symbol="glissando" data-value="&quot;straight&quot;" title="直线滑音">╱ 滑音</button><button data-symbol="glissando" data-value="&quot;wavy&quot;" title="波浪线滑音">∿</button><button data-symbol="arpeggio" data-value="&quot;plain&quot;" title="琶音">𝆃 琶音</button><button data-symbol="pedal" data-value="true" title="延音踏板">Ped. 踏板</button></div>
-<div class="tool-group"><button data-symbol="repeatStart" data-value="true" title="反复起点">𝄆</button><button data-symbol="repeatEnd" data-value="2" title="反复终点，默认两遍">𝄇</button><label class="inline-label">反复次数<input id="repeatTimes" type="number" min="2" max="8" value="2"></label></div>
+<div class="tool-group"><button data-symbol="repeatStart" data-value="true" title="反复起点">𝄆</button><button data-symbol="repeatEnd" data-value="2" title="反复终点，默认两遍">𝄇</button><label class="inline-label">反复次数<input id="repeatTimes" type="number" min="1" step="1" value="2"></label></div>
 <label class="inline-label">结尾<select id="endingTool"><option value="">选择符号</option><option value="1">1. 第一结尾</option><option value="2">2. 第二结尾</option><option value="3">3. 第三结尾</option><option value="1,2">1,2. 结尾</option><option value="2,3">2,3. 结尾</option><option value="clear">取消结尾</option></select></label>
 <label class="inline-label">返回<select id="navigationTool"><option value="">选择符号</option><option value="segno">𝄋 Segno</option><option value="coda">𝄌 Coda</option><option value="to-coda">To Coda</option><option value="fine">Fine</option><option value="dc-fine">D.C. al Fine</option><option value="ds-fine">D.S. al Fine</option><option value="dc-coda">D.C. al Coda</option><option value="ds-coda">D.S. al Coda</option><option value="clear">取消返回</option></select></label>
 <button id="cancelSymbol" hidden>取消符号放置</button>
@@ -32,6 +32,6 @@
 <div id="helpMenu" class="help-menu" role="dialog" aria-label="帮助" hidden></div>
 <dialog id="conversionDialog"><h2>某些符号会被删去</h2><p>以下符号不在简谱中显示。继续转换会删除这些符号；可通过撤销恢复。</p><ul id="conversionList"></ul><div class="dialog-actions"><button id="cancelConversion" class="conversion-cancel">放弃</button><button id="continueConversion" class="conversion-continue">忽略并继续</button></div></dialog>
 <dialog id="confirmDialog"><h2 id="confirmTitle">确认修改</h2><p id="confirmText"></p><div class="dialog-actions"><button id="cancelConfirm">取消</button><button id="acceptConfirm" class="primary">应用修改</button></div></dialog>
-<script src="core.js?rev=unlimited-tempo-15"></script><script src="samples.js"></script><script src="performance.js?rev=unlimited-tempo-15"></script><script src="notebook.js?rev=unlimited-tempo-15"></script><script src="jianpu.js?rev=unlimited-tempo-15"></script><script src="app.js?rev=unlimited-tempo-15"></script>
+<script src="core.js?rev=measure-count-19"></script><script src="samples.js"></script><script src="performance.js?rev=measure-count-19"></script><script src="notebook.js?rev=measure-count-19"></script><script src="jianpu.js?rev=measure-count-19"></script><script src="app.js?rev=measure-count-19"></script>
 </body></html>
 

@@ -6,7 +6,7 @@
   };
   const art={staccato:[.48,1,.003],staccatissimo:[.25,1,.002],accent:[.88,1.24,.002],marcato:[.7,1.38,.002],tenuto:[1,1,.004],fermata:[1,1,.006],breath:[.78,1,.005],legato:[1.04,1,.006],portato:[.76,.96,.009],pizzicato:[.3,.94,.002],arco:[1.05,.9,.04]};
   function policy(n,s){const expression=n.e.expression||s.measures[n.mi]?.expression||'',style=styles[expression]||[1,.93,.004,10000],a=art[n.articulation];return {velocity:style[0]*(a?.[1]||1),gate:a?.[0]??(n.e.slur&&n.next?.e.slur===n.e.slur?1.04:style[1]),attack:a?.[2]??style[2],brightness:n.articulation==='pizzicato'?4500:n.articulation==='arco'?5500:style[3],fp:n.e.dynamic==='fp'};}
-  function brightness(volume,base=10000){return Math.max(900,Math.min(16000,base*(.3+1.4*Math.max(0,Math.min(1,volume)))));}
+  function brightness(volume,base=10000){return Math.max(900,Math.min(16000,base*(.18+1.6*Math.max(0,Math.min(1,volume)))));}
   function auxiliary(s,n,t,direction){const pitch=t.pitch+direction,key=C.keyMap(C.settings(s,n.mi,n.voice).key),alter=key[C.letter(pitch)]||0;return C.naturalMidi(pitch)+alter+n.shift*12;}
   function notes(s,t=C.timeline(s)){
     const result=[],arpGroups=new Map();t.notes.forEach(n=>{if(n.e.arpeggio&&!n.continuation){const k=n.e.arpeggioGroup?'g:'+n.e.arpeggioGroup+':'+n.occurrence+':'+n.beat:'e:'+n.e.id+':'+n.occurrence;if(!arpGroups.has(k))arpGroups.set(k,[]);n.tones.forEach(tone=>arpGroups.get(k).push({n,tone}));}});
