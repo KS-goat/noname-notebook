@@ -52,3 +52,7 @@ Shift+Tab 或谱式按钮只切换编辑器，不转换谱子。两种编辑器�
 - test-core.cjs：Node.js 核心测试。
 
 参考：[简谱记法](https://ssb22.user.srcf.net/mwrhome/jianpu-ly.html)、[琶音](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/arpeggiate/)、[滑音](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/glissando/)。钢琴 Salamander Grand Piano，Alexander Holm，CC BY 3.0；Bravura 字体 Steinberg，SIL OFL 1.1，许可见 Bravura-LICENSE.txt。
+
+## 快速录入更新
+
+2026-10-08 快速录入：长按 Alt 连续追加小节，长按 Shift+Alt 连续删除末尾小节，至少保留一个；松开、组合其他按键、点击或窗口失焦后停止，一次长按可一次撤销。小节数输入框悬停滚轮上增下减，已有内容减少仍先确认；数量与快捷键、撤销、重做和谱子切换同步。简谱空格在无选择时重置最近输入音符为一拍。两种谱式按 . 连续增加最近音符的附点，无预设数量上限，下一音符沿用添加这些附点之前的默认时值。Backspace 保留选中删除，无选择时删除最近输入的一个内容，包括和弦单音、休止符、附点、倚音、力度、歌词和范围符号；不替代撤销。帮助同步更新，桌面与网页版同步，独立手机版未改动。
