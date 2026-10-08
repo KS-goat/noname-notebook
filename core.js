@@ -19,6 +19,8 @@
   const tones=e=>e.type==='rest'?[]:[{pitch:e.pitch,accidental:e.accidental,rhythm:e.toneRhythm?{...e.toneRhythm}:rhythmOf(e),...(e.baseInputId?{inputId:e.baseInputId}:{})},...(e.chord||[]).map(t=>({...t,rhythm:t.rhythm?{...t.rhythm}:rhythmOf(e),accidental:t.accidental??null}))];
   const toneRhythm=(e,index=0)=>tones(e)[index]?.rhythm||rhythmOf(e);
   const rhythmKey=r=>[r.duration,dots(r),!!r.triplet,r.exactTicks??'',r.tuplet?.count||'',r.tuplet?.total||''].join(':');
+  const beamRhythm=e=>tones(e).find(t=>close(ticks(t.rhythm),ticks(e)))?.rhythm||toneRhythm(e);
+  const beamTones=e=>tones(e).filter(t=>rhythmKey(t.rhythm)===rhythmKey(beamRhythm(e)));
   const mixedRhythms=e=>new Set(tones(e).map(t=>rhythmKey(t.rhythm))).size>1;
   // The rhythmic slot fixes subsequent onsets; chord tones hold independently.
   function syncChordRhythm(e){if(e.type==='rest')return;const list=tones(e);if(!list.length)return;if(list.length>1&&!e.stepRhythm)e.stepRhythm=rhythmOf(e);const step=e.stepRhythm||list[0].rhythm;delete e.shortcutInputTicks;delete e.shortcutDotBase;Object.assign(e,rhythmOf(step),{dotted:false});}
@@ -165,7 +167,7 @@
     const groups=[];let group=[],key=null,beat=0;
     const unit=192/meter[1],span=meter[1]===8&&meter[0]>=6&&meter[0]%3===0?unit*3:meter[1]===4&&[2,4].includes(meter[0])?96:unit;
     const flush=()=>{if(group.length>1)groups.push(group);group=[];key=null;};
-    list.forEach(e=>{const k=e.beamGroup?'manual:'+e.beamGroup:e.tuplet?'tuplet:'+e.tuplet.id:'beat:'+Math.floor((beat+EPS)/span),short=e.type==='note'&&toneRhythm(e).duration>=8&&!mixedRhythms(e);if(!short||e.beamBreak){flush();beat+=ticks(e);return;}if(k!==key)flush();group.push(e);key=k;beat+=ticks(e);});flush();return groups;
+    list.forEach(e=>{const k=e.beamGroup?'manual:'+e.beamGroup:e.tuplet?'tuplet:'+e.tuplet.id:'beat:'+Math.floor((beat+EPS)/span),short=e.type==='note'&&beamRhythm(e).duration>=8;if(!short||e.beamBreak){flush();beat+=ticks(e);return;}if(k!==key)flush();group.push(e);key=k;beat+=ticks(e);});flush();return groups;
   }
-  return {rhythmOf,toneRhythm,rhythmKey,mixedRhythms,syncChordRhythm,setTones,setToneRhythm,setAllRhythm,linkToneTies,tones,beamGroups,LETTERS,SHARPS,FLATS,MAJOR,MINOR,ACC,EXPRESSIONS,DYNAMIC_LEVELS,repeatCount,id,EPS,close,fmt,voices,voiceId,events,blank,measure,event,settings,dots,dotFactor,ticks,capacity,keyMap,letter,naturalMidi,pitchName,clefShift,resolved,playbackRoute,timeline,stats,validate,notationFor,setTuplet,fragment,restPieces,repair,sanitize};
+  return {beamRhythm,beamTones,rhythmOf,toneRhythm,rhythmKey,mixedRhythms,syncChordRhythm,setTones,setToneRhythm,setAllRhythm,linkToneTies,tones,beamGroups,LETTERS,SHARPS,FLATS,MAJOR,MINOR,ACC,EXPRESSIONS,DYNAMIC_LEVELS,repeatCount,id,EPS,close,fmt,voices,voiceId,events,blank,measure,event,settings,dots,dotFactor,ticks,capacity,keyMap,letter,naturalMidi,pitchName,clefShift,resolved,playbackRoute,timeline,stats,validate,notationFor,setTuplet,fragment,restPieces,repair,sanitize};
 });
