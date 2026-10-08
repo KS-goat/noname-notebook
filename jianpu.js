@@ -30,7 +30,7 @@ function appendKeyboardNote(digit,central=false){
   if(!central&&jianpuChordTarget&&selectedNotes.size===1&&selectedNotes.has(jianpuChordTarget)){
     const f=findNote(jianpuChordTarget);if(!f)return;if(digit===0){if(f.e.type==='note')cycleNote(f.e.id);jianpuChordTarget=null;return;}
     const c=config(f.mi,f.e.voice),pitch=Jianpu.base(c)+digit-1+jianpuOctave*7-M.clefShift({clef:c.clef})*7;if(pitch<0||pitch>66){toast('音高超出支持范围。');return;}
-    commit(()=>{if(f.e.type==='rest'){f.e.type='note';f.e.pitch=pitch;f.e.chord=[];f.e.placeholder=false;putNoteSelection(f.e.id);}else{if(f.e.chord.length>=31)throw Error('一个声部内最多 32 组音符。');f.e.chord.push({pitch,accidental:null,singerLayer:true});putNoteSelection(f.e.id,new Set([f.e.chord.length]));}});return;
+    commit(()=>{if(f.e.type==='rest'){f.e.type='note';f.e.pitch=pitch;f.e.chord=[];f.e.placeholder=false;putNoteSelection(f.e.id);}else{if(f.e.chord.length>=31)throw Error('一个声部内最多 32 组音符。');f.e.chord.push({pitch,accidental:null,singerLayer:true});M.syncChordRhythm(f.e);putNoteSelection(f.e.id,new Set([f.e.chord.length]));}});return;
   }
   let mi=currentMeasure,voice=activeVoice,beforeId=jianpuCursor?.mi===mi?jianpuCursor.beforeId:null;
   const used=M.events(score,score.measures[mi],voice).filter(e=>!e.placeholder).reduce((n,e)=>n+M.ticks(e),0);if(!beforeId&&used>=M.capacity(score,mi)-M.EPS)mi++;

@@ -10,12 +10,12 @@
   function auxiliary(s,n,t,direction){const pitch=t.pitch+direction,key=C.keyMap(C.settings(s,n.mi,n.voice).key),alter=key[C.letter(pitch)]||0;return C.naturalMidi(pitch)+alter+n.shift*12;}
   function notes(s,t=C.timeline(s)){
     const result=[],arpGroups=new Map();t.notes.forEach(n=>{if(n.e.arpeggio&&!n.continuation){const k=n.e.arpeggioGroup?'g:'+n.e.arpeggioGroup+':'+n.occurrence+':'+n.beat:'e:'+n.e.id+':'+n.occurrence;if(!arpGroups.has(k))arpGroups.set(k,[]);n.tones.forEach(tone=>arpGroups.get(k).push({n,tone}));}});
-    const delays=new Map();arpGroups.forEach(group=>{group.sort((a,b)=>a.tone.midi-b.tone.midi||a.tone.toneIndex-b.tone.toneIndex);if(group.some(x=>x.n.e.arpeggio==='down'))group.reverse();const shortest=Math.min(...group.map(x=>x.n.seconds)),step=Math.min(.06,shortest*.28/Math.max(1,group.length-1));group.forEach(({n,tone},i)=>delays.set(n.e.id+':'+n.occurrence+':'+tone.toneIndex,i*step));});
+    const delays=new Map();arpGroups.forEach(group=>{group.sort((a,b)=>a.tone.midi-b.tone.midi||a.tone.toneIndex-b.tone.toneIndex);if(group.some(x=>x.n.e.arpeggio==='down'))group.reverse();const shortest=Math.min(...group.map(x=>x.tone.seconds??x.n.seconds)),step=Math.min(.06,shortest*.28/Math.max(1,group.length-1));group.forEach(({n,tone},i)=>delays.set(n.e.id+':'+n.occurrence+':'+tone.toneIndex,i*step));});
     function add(base,start,seconds,midi,extra={}){const p=policy(base,s),offset=Math.max(0,start-base.start),ratio=Math.min(1,offset/Math.max(.001,base.seconds));result.push({...base,...p,midi,start,seconds:Math.max(.004,seconds),soundSeconds:Math.max(.004,seconds*p.gate),volume:base.volume+((base.volumeEnd??base.volume)-base.volume)*ratio,volumeEnd:base.volumeEnd??base.volume,validTie:false,continuation:false,next:null,...extra});}
     t.notes.forEach(n=>{
       if(n.midi===null){result.push({...n,next:null});return;}
       let tail=n,total=n.seconds;const segments=[n];while(tail.validTie&&tail.next){tail=tail.next;total+=tail.seconds;segments.push(tail);}
-      const graces=n.continuation?[]:n.graces||[],steal=Math.min(n.seconds*(graces.some(g=>!g.slash)?.5:.25),graces.length*.09),per=graces.length?steal/graces.length:0;
+      const graces=n.continuation?[]:n.graces||[],steal=Math.min((n.stepSeconds??n.seconds)*(graces.some(g=>!g.slash)?.5:.25),graces.length*.09),per=graces.length?steal/graces.length:0;
       graces.forEach((g,i)=>add(n,n.start+i*per,per,g.midi,{grace:true,gate:.85,soundSeconds:per*.85,attack:.002,pedalEnd:null}));
       n.tones.forEach(tone=>{
         if(tone.continuation)return;let toneTail=tone,toneTotal=tone.seconds??n.seconds,toneEnd=n;const toneSegments=[n];while(toneTail.validTie&&toneTail.next){toneEnd=toneTail.next.n;toneTail=toneTail.next.tone;toneTotal+=toneTail.seconds??toneEnd.seconds;toneSegments.push(toneEnd);}const delay=delays.get(n.e.id+':'+n.occurrence+':'+tone.toneIndex)||0,start=n.start+steal+delay,length=Math.max(.01,toneTotal-steal-delay),base={...n,...tone,next:n.next,segments:toneSegments,pedalEnd:Math.max(0,...toneSegments.map(x=>x.pedalEnd||0))||null};
@@ -49,11 +49,13 @@
       windows.push({occurrence:visit.occurrence,from,to,start:cursor,seconds:to-from,mi:visit.mi,pass:visit.pass});cursor+=to-from;
     }
     const pedalTime=(time,index)=>{let window=windows[index];while(index+1<windows.length&&time>window.to+C.EPS&&C.close(window.to,windows[index+1].from))window=windows[++index];return window.start+Math.max(0,Math.min(window.seconds,time-window.from));};
-    const result=[],byOccurrence=new Map();for(const n of t.notes){if(!byOccurrence.has(n.occurrence))byOccurrence.set(n.occurrence,[]);byOccurrence.get(n.occurrence).push(n);}
-    windows.forEach((window,index)=>{
-      (byOccurrence.get(window.occurrence)||[]).filter(n=>n.start<window.to&&n.start+n.seconds>window.from).forEach(n=>{
-        const from=Math.max(n.start,window.from),to=Math.min(n.start+n.seconds,window.to),offset=from-n.start,ramp=n.volumeRampEnd??n.seconds,volumeAt=time=>n.volume+((n.volumeEnd??n.volume)-n.volume)*Math.max(0,Math.min(1,time/Math.max(C.EPS,ramp)));
-        const clippedTones=n.tones.filter(t=>n.start+(t.seconds??n.seconds)>from).map(t=>({...t,seconds:Math.min(n.start+(t.seconds??n.seconds),window.to)-from,continuation:false,validTie:false,next:null}));if(n.midi!==null&&!clippedTones.length)return;const clipped={...n,tones:clippedTones,midi:clippedTones[0]?.midi??null,start:window.start+from-window.from,seconds:to-from,volume:volumeAt(offset),volumeEnd:volumeAt(to-n.start),volumeRampEnd:Math.max(0,Math.min(to-from,ramp-offset)),pedalEnd:n.pedalEnd?pedalTime(n.pedalEnd,index):null,next:null,validTie:false,continuation:false,rangeContinuation:offset>C.EPS};
+    // Keep a held track from earlier bars; contiguous windows do not reattack it.
+    const regions=[];windows.forEach(window=>{const previous=regions.at(-1),tolerance=Number.EPSILON*8*Math.max(Number.MIN_VALUE,Math.abs(previous?.to||0),Math.abs(window.from));if(previous&&Math.abs(previous.to-window.from)<=tolerance)previous.to=window.to;else regions.push({from:window.from,to:window.to,start:window.start,index:windows.indexOf(window)});});
+    const result=[];
+    regions.forEach(region=>{
+      t.notes.filter(n=>n.start<region.to&&n.start+n.seconds>region.from).forEach(n=>{
+        const from=Math.max(n.start,region.from),to=Math.min(n.start+n.seconds,region.to),offset=from-n.start,ramp=n.volumeRampEnd??n.stepSeconds??n.seconds,volumeAt=time=>n.volume+((n.volumeEnd??n.volume)-n.volume)*Math.max(0,Math.min(1,time/Math.max(Number.MIN_VALUE,ramp)));
+        const clippedTones=n.tones.filter(t=>n.start+(t.seconds??n.seconds)>from).map(t=>({...t,seconds:Math.min(n.start+(t.seconds??n.seconds),region.to)-from,continuation:false,validTie:false,next:null}));if(n.midi!==null&&!clippedTones.length)return;const clipped={...n,tones:clippedTones,midi:clippedTones[0]?.midi??null,start:region.start+from-region.from,stepSeconds:Math.max(0,Math.min(n.start+(n.stepSeconds??n.seconds),region.to)-from),seconds:to-from,volume:volumeAt(offset),volumeEnd:volumeAt(to-n.start),volumeRampEnd:Math.max(0,Math.min(to-from,ramp-offset)),pedalEnd:n.pedalEnd?pedalTime(n.pedalEnd,region.index):null,next:null,validTie:false,continuation:false,rangeContinuation:offset>0};
         if(n.e.glissando){let target=n.next;while(target&&n.e.glissTo&&target.e.id!==n.e.glissTo){if(!target.next||target.next.sequence!==target.sequence+1){target=null;break;}target=target.next;}if(target&&target.sequence>n.sequence)clipped.glissTarget={...target,start:clipped.start+target.start-from,next:null};}
         if(clipped.rangeContinuation){delete clipped.attackVolume;clipped.fp=false;clipped.graces=[];}
         result.push(clipped);
